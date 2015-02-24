@@ -8,7 +8,7 @@
 
 #include "DataFormats/Common/interface/Handle.h"
 
-#include "FWCore/Framework/interface/EDAnalyzer.h"
+#include "FWCore/Framework/interface/one/EDAnalyzer.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
@@ -18,7 +18,7 @@
 
 #include "OSUT3Analysis/AnaTools/interface/AnalysisTypes.h"
 
-class InfoPrinter : public edm::EDAnalyzer
+class InfoPrinter : public edm::one::EDAnalyzer<>
 {
   public:
     InfoPrinter (const edm::ParameterSet &);
@@ -80,6 +80,7 @@ class InfoPrinter : public edm::EDAnalyzer
 
     // Object collections which can be gotten from the event.
     Collections handles_;
+    Tokens tokens_;
 
     // Stopwatch for timing the code.
     TStopwatch *sw_;

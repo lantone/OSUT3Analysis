@@ -20,9 +20,30 @@
 // Return whether obj is contained in vec.
 #define VEC_CONTAINS(vec, obj) (find (vec.begin (), vec.end (), obj) != vec.end ())
 
+struct Tokens
+{
+  edm::EDGetTokenT<vector<TYPE(bxlumis)> >         bxlumis;
+  edm::EDGetTokenT<vector<TYPE(electrons)> >       electrons;
+  edm::EDGetTokenT<vector<TYPE(events)> >          events;
+  edm::EDGetTokenT<vector<TYPE(genjets)> >         genjets;
+  edm::EDGetTokenT<vector<TYPE(jets)> >            jets;
+  edm::EDGetTokenT<vector<TYPE(mcparticles)> >     mcparticles;
+  edm::EDGetTokenT<vector<TYPE(mets)> >            mets;
+  edm::EDGetTokenT<vector<TYPE(muons)> >           muons;
+  edm::EDGetTokenT<vector<TYPE(photons)> >         photons;
+  edm::EDGetTokenT<vector<TYPE(primaryvertexs)> >  primaryvertexs;
+  edm::EDGetTokenT<vector<TYPE(superclusters)> >   superclusters;
+  edm::EDGetTokenT<vector<TYPE(taus)> >            taus;
+  edm::EDGetTokenT<vector<TYPE(tracks)> >          tracks;
+  edm::EDGetTokenT<vector<TYPE(trigobjs)> >        trigobjs;
+
+  edm::EDGetTokenT<TYPE(triggers)>                 triggers;
+};
+
 namespace anatools
 {
   template <class InputCollection> bool getCollection (const edm::InputTag &, edm::Handle<InputCollection> &, const edm::Event &);
+  template <class InputCollection> bool getCollection (const edm::InputTag &, edm::Handle<InputCollection> &, const edm::Event &, const edm::EDGetTokenT<InputCollection> &);
 
   // Return a (hopefully) unique hashed integer for an object
   template <class InputObject> int getObjectHash (const InputObject&);
@@ -124,7 +145,7 @@ namespace anatools
 
   // Retrieves all the collections from the event which are needed based on the
   // first argument.
-  void getRequiredCollections (const unordered_set<string> &, const edm::ParameterSet &, Collections &, const edm::Event &);
+  void getRequiredCollections (const unordered_set<string> &, const edm::ParameterSet &, Collections &, const edm::Event &, const Tokens * const = NULL);
 
   double getMember (const string &type, const void * const obj, const string &member);
 
@@ -138,7 +159,8 @@ namespace anatools
 #endif
 }
 
-template <class InputCollection> bool anatools::getCollection(const edm::InputTag& label, edm::Handle<InputCollection>& coll, const edm::Event &event) {
+template <class InputCollection> bool
+anatools::getCollection(const edm::InputTag& label, edm::Handle<InputCollection>& coll, const edm::Event &event) {
   // Get a collection with the specified type, and match the product instance name.
   // Do not use Event::getByLabel() function, since it also matches the module name.
   event.getByLabel(label, coll);
@@ -164,8 +186,15 @@ template <class InputCollection> bool anatools::getCollection(const edm::InputTa
   return true;
 }
 
+template <class InputCollection> bool
+anatools::getCollection(const edm::InputTag& label, edm::Handle<InputCollection>& coll, const edm::Event &event, const edm::EDGetTokenT<InputCollection> &token) {
+  event.getByToken (token, coll);
+  return true;
+}
+
 // version of getMember that doesn't require the "type" as an argument
-template <class InputObject> double anatools::getMember(const InputObject &obj, const string &member)
+template <class InputObject> double
+anatools::getMember(const InputObject &obj, const string &member)
 {
   string type = getObjectClass(obj);
   return getMember(type, &obj, member);
@@ -175,7 +204,8 @@ template <class InputObject> double anatools::getMember(const InputObject &obj, 
 // hash is based on the 3-vector where available.
 // if not, the 3-position is used.
 // some special cases exist as well.
-template <class InputObject> int anatools::getObjectHash(const InputObject& object){
+template <class InputObject> int
+anatools::getObjectHash(const InputObject& object){
     int px_mev, py_mev, pz_mev;
     px_mev = abs(int(1000 * getMember (object, "px")));
     py_mev = abs(int(1000 * getMember (object, "py")));

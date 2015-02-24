@@ -5,7 +5,7 @@
 
 #include "DataFormats/Common/interface/Handle.h"
 
-#include "FWCore/Framework/interface/EDFilter.h"
+#include "FWCore/Framework/interface/stream/EDFilter.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
@@ -15,7 +15,7 @@
 #define EXIT_CODE 2
 
 template<class T>
-class ObjectSelector : public edm::EDFilter
+class ObjectSelector : public edm::stream::EDFilter<>
 {
   public:
     ObjectSelector (const edm::ParameterSet &);
@@ -41,6 +41,8 @@ class ObjectSelector : public edm::EDFilter
     ////////////////////////////////////////////////////////////////////////////
     edm::Handle<vector<T> >            collection;
     edm::Handle<CutCalculatorPayload>  cutDecisions;
+    edm::EDGetTokenT<vector<T> > collectionToken;
+    edm::EDGetTokenT<CutCalculatorPayload> cutDecisionsToken;
     ////////////////////////////////////////////////////////////////////////////
 
     // Payload for this EDFilter.
@@ -57,6 +59,9 @@ ObjectSelector<T>::ObjectSelector (const edm::ParameterSet &cfg) :
   // Retrieve the InputTag for the collection which is to be filtered.
   collection_ = collections_.getParameter<edm::InputTag> (collectionToFilter_);
 
+  collectionToken = consumes<vector<T> > (collection_);
+  cutDecisionsToken = consumes<CutCalculatorPayload> (cutDecisions_);
+
   produces<vector<T> > (collection_.instance ());
 }
 
@@ -72,8 +77,8 @@ ObjectSelector<T>::filter (edm::Event &event, const edm::EventSetup &setup)
   // Get the collection and cut decisions from the event and print a warning if
   // there is a problem.
   //////////////////////////////////////////////////////////////////////////////
-  anatools::getCollection (collection_, collection, event);
-  event.getByLabel (cutDecisions_, cutDecisions);
+  anatools::getCollection (collection_, collection, event, collectionToken);
+  event.getByToken (cutDecisionsToken, cutDecisions);
   if (firstEvent_ && !collection.isValid ())
     clog << "WARNING: failed to retrieve requested collection from the event." << endl;
   if (firstEvent_ && !cutDecisions.isValid ())

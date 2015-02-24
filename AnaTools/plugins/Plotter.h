@@ -3,7 +3,7 @@
 
 #include <unordered_set>
 
-#include "FWCore/Framework/interface/EDAnalyzer.h"
+#include "FWCore/Framework/interface/one/EDAnalyzer.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
@@ -15,7 +15,7 @@
 #include "TH1.h"
 #include "TH2.h"
 
-class Plotter : public edm::EDAnalyzer
+class Plotter : public edm::one::EDAnalyzer<>
 {
     public:
 
@@ -30,7 +30,7 @@ class Plotter : public edm::EDAnalyzer
       //Collections
 
       Collections handles_;
-
+      Tokens tokens_;
 
       vector<edm::ParameterSet> histogramSets_;
 

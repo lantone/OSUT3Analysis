@@ -3,7 +3,7 @@
 
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 
-#include "FWCore/Framework/interface/EDAnalyzer.h"
+#include "FWCore/Framework/interface/one/EDAnalyzer.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
@@ -13,7 +13,7 @@
 
 #include "OSUT3Analysis/AnaTools/interface/AnalysisTypes.h"
 
-class CutFlowPlotter : public edm::EDAnalyzer
+class CutFlowPlotter : public edm::one::EDAnalyzer<>
 {
   public:
     CutFlowPlotter (const edm::ParameterSet &);
@@ -35,6 +35,7 @@ class CutFlowPlotter : public edm::EDAnalyzer
     ////////////////////////////////////////////////////////////////////////////
 
     // Objects which can be gotten from the event.
+    edm::EDGetTokenT<CutCalculatorPayload> cutDecisionsToken;
     edm::Handle<CutCalculatorPayload> cutDecisions;
 
     ////////////////////////////////////////////////////////////////////////////

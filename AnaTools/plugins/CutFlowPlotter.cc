@@ -13,6 +13,8 @@ CutFlowPlotter::CutFlowPlotter (const edm::ParameterSet &cfg) :
   module_label_ (cfg.getParameter<std::string>("@module_label")),
   firstEvent_ (true)
 {
+  cutDecisionsToken = consumes<CutCalculatorPayload> (cutDecisions_);
+
   //////////////////////////////////////////////////////////////////////////////
   // Create a directory for this channel and book the cut flow histograms
   // within.
@@ -81,7 +83,7 @@ CutFlowPlotter::analyze (const edm::Event &event, const edm::EventSetup &setup)
   // Try to retrieve the cut decisions from the event and print a warning if
   // there is a problem.
   //////////////////////////////////////////////////////////////////////////////
-  event.getByLabel (cutDecisions_, cutDecisions);
+  event.getByToken (cutDecisionsToken, cutDecisions);
   if (firstEvent_ && !cutDecisions.isValid ())
     clog << "WARNING: failed to retrieve cut decisions from the event." << endl;
   //////////////////////////////////////////////////////////////////////////////

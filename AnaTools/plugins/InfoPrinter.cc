@@ -28,6 +28,37 @@ InfoPrinter::InfoPrinter (const edm::ParameterSet &cfg) :
   // Start the timer.
   sw_->Start ();
 
+  if (collections_.exists ("bxlumis"))
+    tokens_.bxlumis = consumes<vector<TYPE(bxlumis)> > (collections_.getParameter<edm::InputTag> ("bxlumis"));
+  if (collections_.exists ("electrons"))
+    tokens_.electrons = consumes<vector<TYPE(electrons)> > (collections_.getParameter<edm::InputTag> ("electrons"));
+  if (collections_.exists ("events"))
+    tokens_.events = consumes<vector<TYPE(events)> > (collections_.getParameter<edm::InputTag> ("events"));
+  if (collections_.exists ("genjets"))
+    tokens_.genjets = consumes<vector<TYPE(genjets)> > (collections_.getParameter<edm::InputTag> ("genjets"));
+  if (collections_.exists ("jets"))
+    tokens_.jets = consumes<vector<TYPE(jets)> > (collections_.getParameter<edm::InputTag> ("jets"));
+  if (collections_.exists ("mcparticles"))
+    tokens_.mcparticles = consumes<vector<TYPE(mcparticles)> > (collections_.getParameter<edm::InputTag> ("mcparticles"));
+  if (collections_.exists ("mets"))
+    tokens_.mets = consumes<vector<TYPE(mets)> > (collections_.getParameter<edm::InputTag> ("mets"));
+  if (collections_.exists ("muons"))
+    tokens_.muons = consumes<vector<TYPE(muons)> > (collections_.getParameter<edm::InputTag> ("muons"));
+  if (collections_.exists ("photons"))
+    tokens_.photons = consumes<vector<TYPE(photons)> > (collections_.getParameter<edm::InputTag> ("photons"));
+  if (collections_.exists ("primaryvertexs"))
+    tokens_.primaryvertexs = consumes<vector<TYPE(primaryvertexs)> > (collections_.getParameter<edm::InputTag> ("primaryvertexs"));
+  if (collections_.exists ("superclusters"))
+    tokens_.superclusters = consumes<vector<TYPE(superclusters)> > (collections_.getParameter<edm::InputTag> ("superclusters"));
+  if (collections_.exists ("taus"))
+    tokens_.taus = consumes<vector<TYPE(taus)> > (collections_.getParameter<edm::InputTag> ("taus"));
+  if (collections_.exists ("tracks"))
+    tokens_.tracks = consumes<vector<TYPE(tracks)> > (collections_.getParameter<edm::InputTag> ("tracks"));
+  if (collections_.exists ("trigobjs"))
+    tokens_.trigobjs = consumes<vector<TYPE(trigobjs)> > (collections_.getParameter<edm::InputTag> ("trigobjs"));
+  if (collections_.exists ("triggers"))
+    tokens_.triggers = consumes<TYPE(triggers)> (collections_.getParameter<edm::InputTag> ("triggers"));
+
   unpackValuesToPrint ();
 }
 
@@ -47,7 +78,7 @@ void
 InfoPrinter::analyze (const edm::Event &event, const edm::EventSetup &setup)
 {
   counter_++;
-  anatools::getRequiredCollections (objectsToGet_, collections_, handles_, event);
+  anatools::getRequiredCollections (objectsToGet_, collections_, handles_, event, &tokens_);
 
   //////////////////////////////////////////////////////////////////////////////
   // Get the cut decisions out of the event.
