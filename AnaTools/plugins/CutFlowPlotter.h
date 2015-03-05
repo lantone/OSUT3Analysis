@@ -13,7 +13,7 @@
 
 #include "OSUT3Analysis/AnaTools/interface/AnalysisTypes.h"
 
-class CutFlowPlotter : public edm::one::EDAnalyzer<>
+class CutFlowPlotter : public edm::one::EDAnalyzer<edm::one::SharedResources>
 {
   public:
     CutFlowPlotter (const edm::ParameterSet &);

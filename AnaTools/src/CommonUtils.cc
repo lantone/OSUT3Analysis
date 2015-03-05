@@ -216,6 +216,8 @@ anatools::getRequiredCollections (const unordered_set<string> &objectsToGet, con
               value = dataMember.get (*o).objectCast<unsigned> ();
             else if (dataMemberType == "bool")
               value = dataMember.get (*o).objectCast<bool> ();
+            else if (dataMemberType == "unsigned int")
+              value = dataMember.get (*o).objectCast<unsigned int> ();
             else
               clog << "WARNING: \"" << member << "\" has unrecognized type \"" << dataMemberType << "\"" << endl;
           }
@@ -235,6 +237,8 @@ anatools::getRequiredCollections (const unordered_set<string> &objectsToGet, con
               value = invoke<unsigned> (functionMemberType, o, functionMember);
             else if (functionMemberType == "bool")
               value = invoke<bool> (functionMemberType, o, functionMember);
+            else if (functionMemberType == "unsigned int")
+              value = invoke<unsigned int> (functionMemberType, o, functionMember);
             else
               clog << "WARNING: \"" << member << "()\" has unrecognized return type \"" << functionMemberType << "\"" << endl;
           }
@@ -309,6 +313,8 @@ anatools::getRequiredCollections (const unordered_set<string> &objectsToGet, con
               value = Reflex::Object_Cast<unsigned> (o->Get (member));
             else if (dataMemberType == "bool")
               value = Reflex::Object_Cast<bool> (o->Get (member));
+            else if (dataMemberType == "unsigned int")
+              value = Reflex::Object_Cast<unsigned int> (o->Get (member));
             else
               clog << "WARNING: \"" << member << "\" has unrecognized type \"" << dataMemberType << "\"" << endl;
           }
@@ -328,6 +334,8 @@ anatools::getRequiredCollections (const unordered_set<string> &objectsToGet, con
               value = invoke<unsigned> (functionMemberType, o, member);
             else if (functionMemberType == "bool")
               value = invoke<bool> (functionMemberType, o, member);
+            else if (functionMemberType == "unsigned int")
+              value = invoke<unsigned int> (functionMemberType, o, member);
             else
               clog << "WARNING: \"" << member << "()\" has unrecognized return type \"" << functionMemberType << "\"" << endl;
           }
@@ -460,3 +468,38 @@ anatools::addDeclaringScope (const Reflex::Scope &scope, string &baseName)
 // user-defined cases
 string anatools::getObjectType (const VariableProducerPayload& obj){ return "uservariable"; }
 string anatools::getObjectClass (const VariableProducerPayload& obj){ return "VariableProducerPayload"; }
+
+void
+anatools::getAllTokens (const edm::ParameterSet &collections, edm::ConsumesCollector &&cc, Tokens &tokens)
+{
+  if (collections.exists ("bxlumis"))
+    tokens.bxlumis = cc.consumes<vector<TYPE(bxlumis)> > (collections.getParameter<edm::InputTag> ("bxlumis"));
+  if (collections.exists ("electrons"))
+    tokens.electrons = cc.consumes<vector<TYPE(electrons)> > (collections.getParameter<edm::InputTag> ("electrons"));
+  if (collections.exists ("events"))
+    tokens.events = cc.consumes<vector<TYPE(events)> > (collections.getParameter<edm::InputTag> ("events"));
+  if (collections.exists ("genjets"))
+    tokens.genjets = cc.consumes<vector<TYPE(genjets)> > (collections.getParameter<edm::InputTag> ("genjets"));
+  if (collections.exists ("jets"))
+    tokens.jets = cc.consumes<vector<TYPE(jets)> > (collections.getParameter<edm::InputTag> ("jets"));
+  if (collections.exists ("mcparticles"))
+    tokens.mcparticles = cc.consumes<vector<TYPE(mcparticles)> > (collections.getParameter<edm::InputTag> ("mcparticles"));
+  if (collections.exists ("mets"))
+    tokens.mets = cc.consumes<vector<TYPE(mets)> > (collections.getParameter<edm::InputTag> ("mets"));
+  if (collections.exists ("muons"))
+    tokens.muons = cc.consumes<vector<TYPE(muons)> > (collections.getParameter<edm::InputTag> ("muons"));
+  if (collections.exists ("photons"))
+    tokens.photons = cc.consumes<vector<TYPE(photons)> > (collections.getParameter<edm::InputTag> ("photons"));
+  if (collections.exists ("primaryvertexs"))
+    tokens.primaryvertexs = cc.consumes<vector<TYPE(primaryvertexs)> > (collections.getParameter<edm::InputTag> ("primaryvertexs"));
+  if (collections.exists ("superclusters"))
+    tokens.superclusters = cc.consumes<vector<TYPE(superclusters)> > (collections.getParameter<edm::InputTag> ("superclusters"));
+  if (collections.exists ("taus"))
+    tokens.taus = cc.consumes<vector<TYPE(taus)> > (collections.getParameter<edm::InputTag> ("taus"));
+  if (collections.exists ("tracks"))
+    tokens.tracks = cc.consumes<vector<TYPE(tracks)> > (collections.getParameter<edm::InputTag> ("tracks"));
+  if (collections.exists ("trigobjs"))
+    tokens.trigobjs = cc.consumes<vector<TYPE(trigobjs)> > (collections.getParameter<edm::InputTag> ("trigobjs"));
+  if (collections.exists ("triggers"))
+    tokens.triggers = cc.consumes<TYPE(triggers)> (collections.getParameter<edm::InputTag> ("triggers"));
+}

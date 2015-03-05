@@ -4,21 +4,18 @@
 #include <sstream>
 #include <unordered_set>
 
-#include "CommonTools/UtilAlgos/interface/TFileService.h"
-
 #include "DataFormats/Common/interface/Handle.h"
 
-#include "FWCore/Framework/interface/one/EDAnalyzer.h"
+#include "FWCore/Framework/interface/stream/EDAnalyzer.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
-#include "FWCore/ServiceRegistry/interface/Service.h"
 
 #include "TStopwatch.h"
 
 #include "OSUT3Analysis/AnaTools/interface/AnalysisTypes.h"
 
-class InfoPrinter : public edm::one::EDAnalyzer<>
+class InfoPrinter : public edm::stream::EDAnalyzer<>
 {
   public:
     InfoPrinter (const edm::ParameterSet &);
@@ -90,6 +87,7 @@ class InfoPrinter : public edm::one::EDAnalyzer<>
     stringstream ss_;
 
     // Cut decisions which are gotten from the event.
+    edm::EDGetTokenT<CutCalculatorPayload> cutDecisionsToken;
     edm::Handle<CutCalculatorPayload> cutDecisions;
 
     ValuesToPrint valuesToPrint;

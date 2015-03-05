@@ -14,6 +14,7 @@ CutFlowPlotter::CutFlowPlotter (const edm::ParameterSet &cfg) :
   firstEvent_ (true)
 {
   cutDecisionsToken = consumes<CutCalculatorPayload> (cutDecisions_);
+  usesResource (TFileService::kSharedResource);
 
   //////////////////////////////////////////////////////////////////////////////
   // Create a directory for this channel and book the cut flow histograms

@@ -11,6 +11,7 @@
 #include <unordered_set>
 #include <typeinfo>
 
+#include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/Framework/interface/Event.h"
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
@@ -157,6 +158,8 @@ namespace anatools
   template<class T> T invoke (const string &, Reflex::Object * const, const string &);
   void addDeclaringScope (const Reflex::Scope &, string &);
 #endif
+
+  void getAllTokens (const edm::ParameterSet &, edm::ConsumesCollector &&, Tokens &);
 }
 
 template <class InputCollection> bool

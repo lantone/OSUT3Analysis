@@ -15,7 +15,7 @@
 #include "TH1.h"
 #include "TH2.h"
 
-class Plotter : public edm::one::EDAnalyzer<>
+class Plotter : public edm::one::EDAnalyzer<edm::one::SharedResources>
 {
     public:
 
