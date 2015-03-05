@@ -34,8 +34,8 @@ parser.add_option("-r", "--randomSeed", action="store_true", dest="Random", defa
 parser.add_option("-f", "--fileName", dest="FileName", default = 'process.TFileService.fileName', help="Set the parameter of output filename in config file.")
 parser.add_option("-m", "--maxEvents", dest="MaxEvents", default = -1, help="Set the maximum number of events to run per job.")
 parser.add_option("-p", "--process", dest="Process", default = '', help="Set the suffix for the process name.")
-parser.add_option("-t", "--typeOfSource", dest="FileType", default = 'OSUT3Ntuple', help="Specify the type of input files, ntuples from T3 or AAA via xrootd.")
-parser.add_option("-d", "--dataset", dest="Dataset", default = "", help="Specify which dataset to run.")
+parser.add_option("-t", "--typeOfSource", dest="FileType", default = 'OSUT3Ntuple', help="Specify the type of input files.  Options:  OSUT3Ntuple, AAA, UserDir, UserList.")
+parser.add_option("-d", "--dataset", dest="Dataset", default = "", help="Specify which dataset to run.")  # Dataset is also the name of the output directory in the working directory if FileType == 'OSUT3Ntuple'.  
 parser.add_option("-w", "--workDirectory", dest="Directory", default = "", help="Specify the working directroy.")
 parser.add_option("-c", "--configuration", dest="Config", default = "", help="Specify the configuration file to run.")
 parser.add_option("-n", "--numberOfJobs", dest="NumberOfJobs", default = -1, help="Specify how many jobs to submit.")
@@ -45,23 +45,45 @@ parser.add_option("-N", "--noExec", action="store_true", dest="NotToExecute", de
 parser.add_option("-L", "--Label", dest="Label", default = "", help="Give the dataset a short label.")
 parser.add_option("-s", "--SkimDirectory", dest="SkimDirectory", default = "", help="Specicy the location of the skim.")
 parser.add_option("-a", "--SkimChannel", dest="SkimChannel", default = "", help="Determine the skim channel to run over.")
+parser.add_option("-R", "--Requirements", dest="Requirements", default = "", help="Requirements to be added to condor.sub submssion script, e.g. 'Memory > 1900'.")  
 
 (arguments, args) = parser.parse_args()
+
+def GetCommandLineString():
+    # Return string of all arguments specified on the command line
+    commandLine = ""  
+    for arg in sys.argv:
+        if len(arg.split(" ")) > 1:
+            commandLine = commandLine + " \"" + arg + "\""  # add quotation marks around a multiple-word argument  
+        else:
+            commandLine = commandLine + " " + arg
+    return commandLine  
+
+def GetListOfRootFiles(Directory):
+    fileList = os.popen('ls ' + Directory + '/*.root').read().split('\n')  # remove '\n' from each word  
+    for f in fileList:
+        if len(f) is 0: 
+            fileList.remove(f)   # remove empty filename
+    return fileList  
+ 
 
 def MakeCondorSubmitScript(Dataset,NumberOfJobs,Directory,Label):
     os.system('touch ' + Directory + '/condor.sub')
     SubmitFile = open(Directory + '/condor.sub','r+w')
     cmsRunExecutable = os.popen('which cmsRun').read()
+    SubmitFile.write("# Command line arguments: \n# " + GetCommandLineString() + " \n\n\n")  
     for argument in sorted(CondorSubArgumentsSet):
         if CondorSubArgumentsSet[argument].has_key('Executable') and CondorSubArgumentsSet[argument]['Executable'] == "":
             SubmitFile.write('Executable = ' + cmsRunExecutable + '\n')
         elif CondorSubArgumentsSet[argument].has_key('Arguments') and CondorSubArgumentsSet[argument]['Arguments'] == "":
             SubmitFile.write('Arguments = config_cfg.py True ' + str(NumberOfJobs) + ' $(Process) ' + Dataset + ' ' + Label + '\n\n')
-        elif CondorSubArgumentsSet[argument].has_key('Transfer_Input_files') and CondorSubArgumentsSet[argument]['Transfer_Input_files'] == "":
+        elif CondorSubArgumentsSet[argument].has_key('Transfer_Input_files') and CondorSubArgumentsSet[argument]['Transfer_Input_files'] == "":   
             if Dataset == '':
                 SubmitFile.write('Transfer_Input_files = config_cfg.py,userConfig_cfg.py\n')
             else:
                 SubmitFile.write('Transfer_Input_files = config_cfg.py,userConfig_cfg.py,datasetInfo_' + Label + '_cfg.py\n')
+        elif CondorSubArgumentsSet[argument].has_key('Requirements') and arguments.Requirements:
+            SubmitFile.write('Requirements = ' + arguments.Requirements + '\n')
         elif CondorSubArgumentsSet[argument].has_key('Queue'):
             SubmitFile.write('Queue ' + str(NumberOfJobs) +'\n')
         else:
@@ -102,53 +124,75 @@ def MakeSpecificConfig(Dataset, Directory):
     if arguments.Random:
         ConfigFile.write('pset.process.RandomNumberGeneratorService.generator.initialSeed = osusub.jobNumber\n')
     if arguments.Unique:
-        #Make all the events IDs unique and continuos.
-        ConfigFile.write('pset.process.source.firstEvent = cms.untracked.uint32((osusub.jobNumber-1)*' + str(EventsPerJob) + '+1)\n')
+        # Specify a different lumi section for each job so that all events have unique run / lumi / event numbers.  
+        # Instead of changing lumi section, could also change run number.  
+        ConfigFile.write('pset.process.source.firstLuminosityBlock = cms.untracked.uint32((osusub.jobNumber)+1) \n') # osusub.jobNumber starts with 0  
     ConfigFile.close()
 
 def MakeFileList(Dataset, FileType, Directory, Label):
     numberOfFiles = -1
     datasetRead = {}
     runList = []
-    os.system('touch ' + Directory + '/datasetInfo_' + Label + '_cfg.py')
+    datasetInfoName = Directory + '/datasetInfo_' + Label + '_cfg.py'
+    os.system('touch ' + datasetInfoName)  
     if FileType == 'AAA':	
-        os.system('das_client.py --query="file Dataset=' + Dataset + '" --limit 0 > ' + Directory + '/datasetInfo_' + Label + '_cfg.py')
+        os.system('das_client.py --query="file Dataset=' + Dataset + '" --limit 0 > ' + datasetInfoName) 
         if lxbatch:
-	    os.system('sed -i \'s/^/root:\/\/xrootd.ba.infn.it\//g\' ' + Directory + '/datasetInfo_' + Label + '_cfg.py')
+	    os.system('sed -i \'s/^/root:\/\/xrootd.ba.infn.it\//g\' ' + datasetInfoName) 
         else:
-	    os.system('sed -i \'s/^/root:\/\/cmsxrootd.fnal.gov\//g\' ' + Directory + '/datasetInfo_' + Label + '_cfg.py')
+	    os.system('sed -i \'s/^/root:\/\/cmsxrootd.fnal.gov\//g\' ' + datasetInfoName) 
     if FileType == 'UserDir':
+        isInCondorDir = False
+        SubmissionDir = os.getcwd() 
+        if not "/" in Dataset:
+            # Then assume it is in condor/ directory.  
+            Dataset = "condor/" + Dataset  
+            isInCondorDir = True 
 	if not os.path.exists(Dataset):
-	    print "The directory you provided does not exist."
+	    print "The directory you provided does not exist: ", Dataset  
             sys.exit()
-        datasetRead['numberOfFiles'] = len(os.listdir(Dataset))
-        datasetRead['realDatasetName'] = 'FilesInDirectory:' + Dataset 
         #Get the list of the root files in the directory and modify it to have the standard format. 
-        os.system('ls ' + Dataset + '/*.root > ' + Directory + '/datasetInfo_' + Label + '_cfg.py')
-        if not remoteAccessT3:
-            os.system('sed -i \'s/^/"file:/g\' ' + Directory + '/datasetInfo_' + Label + '_cfg.py')
-        else:
-            os.system('sed -i \'s/^/"root:\/\/cms-0.mps.ohio-state.edu:1094\//g\' ' + Directory + '/datasetInfo_' + Label + '_cfg.py')
-        os.system('sed -i \'1,$s/$/",/g\' ' + Directory + '/datasetInfo_' + Label + '_cfg.py')
-        os.system('sed -i "1i listOfFiles = [" ' + Directory + '/datasetInfo_' + Label + '_cfg.py')                  
-        os.system('sed -i \'$s/,//g\' ' + Directory + '/datasetInfo_' + Label + '_cfg.py')                  
-        os.system('sed -i \'$a ]\' ' + Directory + '/datasetInfo_' + Label + '_cfg.py')                  
+        inputFiles = GetListOfRootFiles(Dataset)  
+        datasetRead['numberOfFiles'] = len(inputFiles)  
+        datasetRead['realDatasetName'] = 'FilesInDirectory:' + Dataset 
+        text = 'listOfFiles = [  \n' 
+        for f in inputFiles:
+            if remoteAccessT3:
+                f = "root://cms-0.mps.ohio-state.edu:1094/" + f
+            else: 
+                if isInCondorDir:
+                    f = SubmissionDir + "/" + f  
+                f = "file:" + f 
+            text += '"' + f + '",\n'  
+        text += ']  \n'  
+        text += 'numberOfFiles = ' + str(datasetRead['numberOfFiles']) + '\n'          
+        fnew = open(datasetInfoName, "w") 
+        fnew.write(text)
+        fnew.close()  
     if FileType == 'UserList':
 	if not os.path.exists(Dataset):
             print "The list you provided does not exist."
             sys.exit()
         #Get the list of the files to datasetInfo_cfg.py and modify it to have the standard format. 
-        os.system('cp ' + Dataset + ' '  + Directory + '/datasetInfo_' + Label + '_cfg.py')	
-        datasetRead['numberOfFiles'] = os.popen('wc -l ' + Directory + '/datasetInfo_' + Label + '_cfg.py').read().split(' ')[0] 
-        datasetRead['realDatasetName'] = 'FilesInList:' + Dataset 
-        if not remoteAccessT3:
-            os.system('sed -i \'s/^/"file:/g\' ' + Directory + '/datasetInfo_' + Label + '_cfg.py')
-        else:
-            os.system('sed -i \'s/^/"root:\/\/cms-0.mps.ohio-state.edu:1094\//g\' ' + Directory + '/datasetInfo_' + Label + '_cfg.py')
-        os.system('sed -i \'1,$s/$/",/g\' ' + Directory + '/datasetInfo_' + Label + '_cfg.py')
-        os.system('sed -i "1i listOfFiles = [" ' + Directory + '/datasetInfo_' + Label + '_cfg.py')                  
-        os.system('sed -i \'$s/,//g\' ' + Directory + '/datasetInfo_' + Label + '_cfg.py')                  
-        os.system('sed -i \'$a ]\' ' + Directory + '/datasetInfo_' + Label + '_cfg.py')                  
+        inputFileList = open(Dataset, "r") 
+        inputFiles = inputFileList.read().split('\n')  
+        for f in reversed(range(len(inputFiles))): 
+            if not ".root" in inputFiles[f]: 
+                del inputFiles[f]  
+        datasetRead['numberOfFiles'] = len(inputFiles)  
+        datasetRead['realDatasetName'] = 'FilesInDirectory:' + Dataset 
+        text = 'listOfFiles = [  \n' 
+        for f in inputFiles:
+            if remoteAccessT3:
+                f = "root://cms-0.mps.ohio-state.edu:1094/" + f
+            else: 
+                f = "file:" + f 
+            text += '"' + f + '",\n'  
+        text += ']  \n'  
+        text += 'numberOfFiles = ' + str(datasetRead['numberOfFiles']) + '\n'          
+        fnew = open(datasetInfoName, "w") 
+        fnew.write(text)
+        fnew.close()  
     if FileType == 'OSUT3Ntuple':
         prefix = ''
         if not remoteAccessT3 :
@@ -158,7 +202,7 @@ def MakeFileList(Dataset, FileType, Directory, Label):
         if RunOverSkim:
             print "You have specified a skim as input.  Will obtain cross sections from the database."  
         #Use MySQLModule, a perl script to get the information of the given dataset from T3 DB and save it in datasetInfo_cfg.py. 
-        os.system('MySQLModule ' + Dataset + ' ' + Directory + '/datasetInfo_' + Label + '_cfg.py ' + prefix)
+        os.system('MySQLModule ' + Dataset + ' ' + datasetInfoName + ' ' + prefix)
         if RunOverSkim:
             SkimModifier(Label, Directory)
         sys.path.append(Directory)
@@ -250,15 +294,12 @@ def SkimModifier(Label, Directory):
     fin.close()
     orig = orig.replace("listOfFiles",   "originalListOfFiles")  
     orig = orig.replace("numberOfFiles", "originalNumberOfFiles")  
-    skimFiles = os.popen('ls ' + SkimDirectory + '/*.root').read().split('\n')  
+    skimFiles = GetListOfRootFiles(SkimDirectory)
     add  = "\n"
     add += 'skimDirectory = "' + SkimDirectory + '"\n'  
     add += 'listOfFiles = [  \n' 
     for s in skimFiles:
-        if ".root" in s: 
-            add += '"file:' + s + '",\n'  
-        else:
-            skimFiles.remove(s)  
+        add += '"file:' + s + '",\n'  
     add += ']  \n'  
     add += 'numberOfFiles = ' + str(len(skimFiles)) + '\n'  
     add += 'originalNumberOfEvents = ' + str(OriginalNumberOfEvents) + '\n'
@@ -267,22 +308,32 @@ def SkimModifier(Label, Directory):
     fnew.write(orig + add)
     fnew.close()  
 
+
+
 ################################################################################
 #             First of all to set up the working directory                     #
 ################################################################################
 CondorDir = ''
 Condor = os.getcwd() + '/condor/'
+if not os.path.exists(Condor):
+    print "The directory ", Condor, "does not exist.  Aborting."  
+    sys.exit()
 if arguments.Directory == "":
-   print "No working directory is given, aborting."
-   sys.exit()
+    print "No working directory is given, aborting."
+    sys.exit()
 else:
-   CondorDir = Condor + arguments.Directory
+    CondorDir = Condor + arguments.Directory
 #Check whether the directory specified already exists and warn the user if so.
 if not os.path.exists(CondorDir):
-   os.system('mkdir ' + CondorDir)
+    os.system('mkdir ' + CondorDir)
 else:
-   print 'Directory "' + str(CondorDir) + '" already exists in your condor directory. Will proceed with job submission.' 
-
+    if arguments.FileType == "OSUT3Ntuple":
+        # Ok to proceed, since the working directory will be "CondorDir/dataset"
+        print 'Directory "' + str(CondorDir) + '" already exists in your condor directory. Will proceed with job submission.' 
+    else:
+        # Do not proceed because the working directory is CondorDir, and we do not want to overwrite existing files.  
+        print "Directory", CondorDir, " already exists.  Please remove it before proceeding."  
+        sys.exit()  
 RunOverSkim = False
 if arguments.SkimDirectory != "" and arguments.SkimChannel != "":
     RunOverSkim = True
@@ -348,12 +399,15 @@ if split_datasets:
             Config = config_file
             GetCompleteOrderedArgumentsSet(InputCondorArguments)
         SubmissionDir = os.getcwd()
-        WorkDir = CondorDir + '/' + str(dataset)
-        if os.path.exists(WorkDir): 
-            print 'Directory "' + str(WorkDir) + '" already exists.  Please remove it and resubmit.'  
-            continue 
-        else: 
-            os.system('mkdir ' + WorkDir )
+        if arguments.FileType == 'OSUT3Ntuple': 
+            WorkDir = CondorDir + '/' + str(dataset)
+            if os.path.exists(WorkDir): 
+                print 'Directory "' + str(WorkDir) + '" already exists.  Please remove it and resubmit.'  
+                continue 
+            else: 
+                os.system('mkdir ' + WorkDir )
+        else:
+            WorkDir = CondorDir 
 
         DatasetRead = MakeFileList(DatasetName,arguments.FileType,WorkDir,dataset)
         NumberOfFiles = int(DatasetRead['numberOfFiles'])

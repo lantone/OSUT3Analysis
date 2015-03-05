@@ -132,11 +132,11 @@ anatools::getRequiredCollections (const unordered_set<string> &objectsToGet, con
 
   if  (VEC_CONTAINS  (objectsToGet,  "userVariables")   &&  collections.exists  ("userVariables"))
     {
-      handles.userVariables.clear ();
-      for (const auto &collection : collections.getParameter<vector<edm::InputTag> >  ("userVariables"))
+      handles.uservariables.clear ();
+      for (const auto &collection : collections.getParameter<vector<edm::InputTag> >  ("uservariables"))
         {
-          handles.userVariables.resize (handles.userVariables.size () + 1);
-          getCollection (collection, handles.userVariables.back (), event);
+          handles.uservariables.resize (handles.uservariables.size () + 1);
+          getCollection (collection, handles.uservariables.back (), event);
         }
     }
 

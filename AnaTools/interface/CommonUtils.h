@@ -107,11 +107,11 @@ namespace anatools
   string getObjectType (const TYPE(trigobjs) &);
   string getObjectClass (const TYPE(trigobjs) &);
 #endif
-
+#if IS_VALID(uservariables)
   // user-defined cases
   string getObjectType (const VariableProducerPayload&);
   string getObjectClass (const VariableProducerPayload&);
-
+#endif
   // Extracts the constituent collections from a composite collection name.
   vector<string> getSingleObjects (string);
 
