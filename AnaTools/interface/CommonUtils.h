@@ -23,6 +23,7 @@
 
 struct Tokens
 {
+  edm::EDGetTokenT<TYPE(beamspots)>                beamspots;
   edm::EDGetTokenT<vector<TYPE(bxlumis)> >         bxlumis;
   edm::EDGetTokenT<vector<TYPE(electrons)> >       electrons;
   edm::EDGetTokenT<vector<TYPE(events)> >          events;
