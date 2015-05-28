@@ -33,8 +33,12 @@ CutCalculator::CutCalculator (const edm::ParameterSet &cfg) :
 
 CutCalculator::~CutCalculator ()
 {
-  for (auto &cut : unpackedCuts_)
-    delete cut.valueLookupTree;
+ 
+   for (auto &cut : unpackedCuts_)
+     {
+       if (cut.valueLookupTree) 
+         delete cut.valueLookupTree;
+     }
 }
 
 void
@@ -332,6 +336,8 @@ CutCalculator::unpackCuts ()
       //////////////////////////////////////////////////////////////////////////
 
       // Store the temporary cut variable into the vector of unpacked cuts.
+      //initialize the valueLookupTree to be NULL
+      tempCut.valueLookupTree = NULL;
       unpackedCuts_.push_back (tempCut);
     }
 

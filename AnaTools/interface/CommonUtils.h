@@ -146,6 +146,7 @@ namespace anatools
   // Comparison functions for sorting.
   ////////////////////////////////////////////////////////////////////////////////
   bool firstOfPairAscending (pair<size_t, string>, pair<size_t, string>);
+  bool firstOfPairDescending (pair<size_t, string>, pair<size_t, string>);
   bool collectionIndexAscending (pair<string, tuple<unsigned, unsigned, void *> >, pair<string, tuple<unsigned, unsigned, void *> >);
   ////////////////////////////////////////////////////////////////////////////////
 
