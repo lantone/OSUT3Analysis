@@ -19,6 +19,12 @@ MuonHistograms = cms.PSet(
             inputVariables = cms.vstring("number(muon)"),
         ),
         cms.PSet (
+            name = cms.string("muonGenMatchedPromptFinalStatePdgId"),
+            title = cms.string(";PDG ID of matched generator particle"),
+            binsX = cms.untracked.vdouble(getPdgBins(["quarks", "leptons"])),
+            inputVariables = cms.vstring("abs (genMatchedParticle.promptFinalState.pdgId)"),
+        ),
+        cms.PSet (
             name = cms.string("muonPt"),
             title = cms.string("Muon Transverse Momentum; muon p_{T} [GeV]"),
             binsX = cms.untracked.vdouble(100, 0, 500),
@@ -229,6 +235,12 @@ ElectronHistograms = cms.PSet(
             title = cms.string("Number of Selected Electrons; # electrons"),
             binsX = cms.untracked.vdouble(10, 0, 10),
             inputVariables = cms.vstring("number(electron)"),
+        ),
+        cms.PSet (
+            name = cms.string("electronGenMatchedPromptFinalStatePdgId"),
+            title = cms.string(";PDG ID of matched generator particle"),
+            binsX = cms.untracked.vdouble(getPdgBins(["quarks", "leptons"])),
+            inputVariables = cms.vstring("abs (genMatchedParticle.promptFinalState.pdgId)"),
         ),
         cms.PSet (
             name = cms.string("electronPt"),
